@@ -1,4 +1,4 @@
-name: Build custom ALC256 Layout 102
+name: Build custom ALC256 Layout 103
 
 on:
   push:
@@ -36,8 +36,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -s Resources/ALC256/layout102.xml
-          test -s Resources/ALC256/Platforms102.xml
+          test -s Resources/ALC256/layout103.xml
+          test -s Resources/ALC256/Platforms103.xml
           test -s Resources/ALC256/Info.plist
           test -d "$DEVELOPER_DIR"
           xcodebuild -version
@@ -48,7 +48,7 @@ jobs:
           prefix = b'<?xml version="1.0" encoding="UTF-8"?><plist version="1.0">'
           suffix = b'</plist>'
           res = Path('Resources/ALC256')
-          for name in ['layout102.xml', 'Platforms102.xml']:
+          for name in ['layout103.xml', 'Platforms103.xml']:
               parsed = plistlib.loads(prefix + (res / name).read_bytes() + suffix)
               print('Verified:', name, type(parsed).__name__)
           info = plistlib.loads((res / 'Info.plist').read_bytes())
@@ -75,11 +75,11 @@ jobs:
           fi
           echo "Packaging $KEXT"
           mkdir -p output
-          ditto -c -k --sequesterRsrc --keepParent "$KEXT" output/AppleALC-ALC256-layout102-EXPERIMENTAL.zip
+          ditto -c -k --sequesterRsrc --keepParent "$KEXT" output/AppleALC-ALC256-layout103-EXPERIMENTAL.zip
 
       - name: Upload custom AppleALC artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AppleALC-ALC256-layout102-experimental
-          path: output/AppleALC-ALC256-layout102-EXPERIMENTAL.zip
+          name: AppleALC-ALC256-layout103-experimental
+          path: output/AppleALC-ALC256-layout103-EXPERIMENTAL.zip
           if-no-files-found: error
