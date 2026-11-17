@@ -10,7 +10,8 @@ on:
 env:
   PROJECT_TYPE: KEXT
   ACID32: ""
-
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+  
 jobs:
   build:
     name: Build
