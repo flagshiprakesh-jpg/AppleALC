@@ -9,7 +9,7 @@ on:
 
 env:
   PROJECT_TYPE: KEXT
-  ACID32: 1
+  ACID32: ""
 
 jobs:
   build:
@@ -30,8 +30,8 @@ jobs:
         run: |
           src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/Lilu/master/Lilu/Scripts/bootstrap.sh) && eval "$src" || exit 1
 
-      - run: xcodebuild -jobs 1 -configuration Debug -arch ACID32 -arch x86_64
-      - run: xcodebuild -jobs 1 -configuration Release -arch ACID32 -arch x86_64
+      - run: xcodebuild -jobs 1 -configuration Debug -arch x86_64
+      - run: xcodebuild -jobs 1 -configuration Release -arch x86_64
 
       - name: Upload to Artifacts
         uses: actions/upload-artifact@v6
