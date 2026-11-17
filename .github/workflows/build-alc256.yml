@@ -1,0 +1,90 @@
+name: Build custom ALC256 Layout 101
+
+on:
+  push:
+    branches:
+      - alc256-fx706hf
+    paths:
+      - .github/workflows/build-alc256.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_TYPE: KEXT
+  ACID32: ''
+  DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+
+jobs:
+  build:
+    name: Build AppleALC x86_64
+    runs-on: macos-15-intel
+    env:
+      JOB_TYPE: BUILD
+    steps:
+      - name: Checkout custom AppleALC branch
+        uses: actions/checkout@v4
+
+      - name: Checkout MacKernelSDK
+        uses: actions/checkout@v4
+        with:
+          repository: acidanthera/MacKernelSDK
+          path: MacKernelSDK
+
+      - name: Check custom ALC256 source and Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s Resources/ALC256/layout101.xml
+          test -s Resources/ALC256/Platforms101.xml
+          test -s Resources/ALC256/Info.plist
+          test -d "$DEVELOPER_DIR"
+          xcodebuild -version
+          xcrun --find clang
+          python3 - <<'PY'
+          from pathlib import Path
+          import plistlib
+          prefix = b'<?xml version="1.0" encoding="UTF-8"?><plist version="1.0">'
+          suffix = b'</plist>'
+          res = Path('Resources/ALC256')
+          for name in ['layout101.xml', 'Platforms101.xml']:
+              parsed = plistlib.loads(prefix + (res / name).read_bytes() + suffix)
+              print('Verified:', name, type(parsed).__name__)
+          info = plistlib.loads((res / 'Info.plist').read_bytes())
+          print('Verified:', 'Info.plist')
+          PY
+
+      - name: CI Bootstrap
+        shell: bash
+        run: |
+          src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/ocbuild/master/ci-bootstrap.sh) && eval "$src" || exit 1
+
+      - name: Lilu Bootstrap
+        shell: bash
+        run: |
+          src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/Lilu/master/Lilu/Scripts/bootstrap.sh) && eval "$src" || exit 1
+
+      - name: Build Release for Intel macOS
+        run: xcodebuild -jobs 1 -configuration Release -arch x86_64
+
+      - name: Package AppleALC.kext
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEXT="$(find build -type d -name AppleALC.kext -print | sed -n '1p')"
+          if [ -z "$KEXT" ]; then
+            echo 'ERROR: Build finished but AppleALC.kext was not found.'
+            find build -maxdepth 4 -print | head -80
+            exit 1
+          fi
+          echo "Packaging $KEXT"
+          mkdir -p output
+          ditto -c -k --sequesterRsrc --keepParent "$KEXT" output/AppleALC-ALC256-layout101-EXPERIMENTAL.zip
+
+      - name: Upload custom AppleALC artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppleALC-ALC256-layout101-experimental
+          path: output/AppleALC-ALC256-layout101-EXPERIMENTAL.zip
+          if-no-files-found: error
