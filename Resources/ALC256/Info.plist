@@ -276,6 +276,14 @@
 				<key>Path</key>
 				<string>layout41.xml.zlib</string>
 			</dict>
+            <dict>
+                <key>Comment</key>
+                <string>ASUS TUF F17 FX706HF - Experimental ALC256</string>
+                <key>Id</key>
+                <integer>101</integer>
+                <key>Path</key>
+                <string>layout101.xml.zlib</string>
+           </dict>
 		</array>
 		<key>Platforms</key>
 		<array>
@@ -543,6 +551,14 @@
 				<key>Path</key>
 				<string>Platforms41.xml.zlib</string>
 			</dict>
+            <dict>
+                <key>Comment</key>
+                <string>ASUS TUF F17 FX706HF - Experimental ALC256</string>
+                <key>Id</key>
+                <integer>101</integer>
+                <key>Path</key>
+                <string>Platforms101.xml.zlib</string>
+            </dict>
 		</array>
 	</dict>
 	<key>Patches</key>
