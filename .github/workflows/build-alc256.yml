@@ -55,11 +55,6 @@ jobs:
           print('Verified:', 'Info.plist')
           PY
 
-      - name: CI Bootstrap
-        shell: bash
-        run: |
-          src=$(/usr/bin/curl -Lfs https://raw.githubusercontent.com/acidanthera/ocbuild/master/ci-bootstrap.sh) && eval "$src" || exit 1
-
       - name: Lilu Bootstrap
         shell: bash
         run: |
