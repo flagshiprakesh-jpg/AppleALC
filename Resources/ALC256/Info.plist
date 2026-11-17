@@ -292,6 +292,14 @@
                 <key>Path</key>
                 <string>layout102.xml.zlib</string>
             </dict>
+            <dict>
+                <key>Comment</key>
+                <string>ASUS TUF F17 FX706HF - experimental layout 103 output order fix</string>
+                <key>Id</key>
+                <integer>103</integer>
+                <key>Path</key>
+                <string>layout103.xml.zlib</string>
+            </dict>
 		</array>
 		<key>Platforms</key>
 		<array>
@@ -574,6 +582,14 @@
                 <integer>102</integer>
                 <key>Path</key>
                 <string>Platforms102.xml.zlib</string>
+            </dict>
+            <dict>
+                <key>Comment</key>
+                <string>ASUS TUF F17 FX706HF - experimental layout 103 output order fix</string>
+                <key>Id</key>
+                <integer>103</integer>
+                <key>Path</key>
+                <string>Platforms103.xml.zlib</string>
             </dict>
 		</array>
 	</dict>
