@@ -1,4 +1,4 @@
-name: Build custom ALC256 Layout 103
+name: Build ALC256 Layout 103 with speaker PinConfigs
 
 on:
   push:
@@ -53,6 +53,47 @@ jobs:
               print('Verified:', name, type(parsed).__name__)
           info = plistlib.loads((res / 'Info.plist').read_bytes())
           print('Verified:', 'Info.plist')
+          PY
+
+      - name: Inject ALC256 layout 103 PinConfigs (speaker 49 + internal mic 77)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import copy
+          import plistlib
+
+          path = Path('Resources/PinConfigs.kext/Contents/Info.plist')
+          root = plistlib.loads(path.read_bytes())
+          entries = root['IOKitPersonalities']['as.vit9696.AppleALC']['HDAConfigDefault']
+          codec_id = 283902550
+          matches = [e for e in entries if e.get('CodecID') == codec_id and e.get('LayoutID') == 49]
+          assert len(matches) == 1, 'Expected exactly one working speaker Layout 49 PinConfigs entry'
+          assert not any(e.get('CodecID') == codec_id and e.get('LayoutID') == 103 for e in entries), 'Layout 103 PinConfigs already exists'
+          custom = copy.deepcopy(matches[0])
+          custom['LayoutID'] = 103
+          custom['Codec'] = 'ASUS FX706HF experimental: layout49 speaker verbs + layout77 internal mic pin 0x12'
+          data = bytes(custom['ConfigData'])
+          # Layout 49 disables internal mic at node 0x12 (0x400000f0);
+          # set that node to the tested Ubuntu/77 pin value 0x90a60130.
+          replacements = {
+              '01271cf0': '01271c30',
+              '01271d00': '01271d01',
+              '01271e00': '01271ea6',
+              '01271f40': '01271f90',
+          }
+          for before, after in replacements.items():
+              a, b = bytes.fromhex(before), bytes.fromhex(after)
+              assert data.count(a) == 1, 'Expected exactly one codec verb ' + before
+              data = data.replace(a, b, 1)
+          custom['ConfigData'] = data
+          assert bytes.fromhex('02050010') in data, 'Realtek speaker vendor coefficient absent'
+          assert bytes.fromhex('02045089') in data, 'Realtek speaker vendor coefficient absent'
+          assert bytes.fromhex('01271ea6') in data, 'Internal mic pin override absent'
+          entries.append(custom)
+          path.write_bytes(plistlib.dumps(root, fmt=plistlib.FMT_XML, sort_keys=False))
+          print('Added PinConfigs for ALC256 Layout 103, retaining working speaker 49 initialization and enabling internal mic 0x12')
           PY
 
       - name: Lilu Bootstrap
