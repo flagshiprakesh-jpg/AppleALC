@@ -300,6 +300,14 @@
                 <key>Path</key>
                 <string>layout103.xml.zlib</string>
             </dict>
+            <dict>
+                <key>Comment</key>
+                <string>ASUS TUF F17 FX706HF - experimental layout 104 (layout77 mic pins + layout49 speaker coefficients)</string>
+                <key>Id</key>
+                <integer>104</integer>
+                <key>Path</key>
+                <string>layout104.xml.zlib</string>
+            </dict>
 		</array>
 		<key>Platforms</key>
 		<array>
@@ -590,6 +598,14 @@
                 <integer>103</integer>
                 <key>Path</key>
                 <string>Platforms103.xml.zlib</string>
+            </dict>
+            <dict>
+                <key>Comment</key>
+                <string>ASUS TUF F17 FX706HF - experimental layout 104 (layout77 mic pins + layout49 speaker coefficients)</string>
+                <key>Id</key>
+                <integer>104</integer>
+                <key>Path</key>
+                <string>Platforms104.xml.zlib</string>
             </dict>
 		</array>
 	</dict>
