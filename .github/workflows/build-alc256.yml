@@ -1,4 +1,4 @@
-name: Build ALC256 Layout 103 with speaker PinConfigs
+name: Build ALC256 Layout 104 hybrid mic pins
 
 on:
   push:
@@ -36,8 +36,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -s Resources/ALC256/layout103.xml
-          test -s Resources/ALC256/Platforms103.xml
+          test -s Resources/ALC256/layout104.xml
+          test -s Resources/ALC256/Platforms104.xml
           test -s Resources/ALC256/Info.plist
           test -d "$DEVELOPER_DIR"
           xcodebuild -version
@@ -48,14 +48,14 @@ jobs:
           prefix = b'<?xml version="1.0" encoding="UTF-8"?><plist version="1.0">'
           suffix = b'</plist>'
           res = Path('Resources/ALC256')
-          for name in ['layout103.xml', 'Platforms103.xml']:
+          for name in ['layout104.xml', 'Platforms104.xml']:
               parsed = plistlib.loads(prefix + (res / name).read_bytes() + suffix)
               print('Verified:', name, type(parsed).__name__)
           info = plistlib.loads((res / 'Info.plist').read_bytes())
           print('Verified:', 'Info.plist')
           PY
 
-      - name: Inject ALC256 layout 103 PinConfigs (speaker 49 + internal mic 77)
+      - name: Inject ALC256 layout 104 PinConfigs (layout77 mic pins and layout49 speaker coefficients)
         shell: bash
         run: |
           set -euo pipefail
@@ -68,32 +68,26 @@ jobs:
           root = plistlib.loads(path.read_bytes())
           entries = root['IOKitPersonalities']['as.vit9696.AppleALC']['HDAConfigDefault']
           codec_id = 283902550
-          matches = [e for e in entries if e.get('CodecID') == codec_id and e.get('LayoutID') == 49]
-          assert len(matches) == 1, 'Expected exactly one working speaker Layout 49 PinConfigs entry'
-          assert not any(e.get('CodecID') == codec_id and e.get('LayoutID') == 103 for e in entries), 'Layout 103 PinConfigs already exists'
-          custom = copy.deepcopy(matches[0])
-          custom['LayoutID'] = 103
-          custom['Codec'] = 'ASUS FX706HF experimental: layout49 speaker verbs + layout77 internal mic pin 0x12'
-          data = bytes(custom['ConfigData'])
-          # Layout 49 disables internal mic at node 0x12 (0x400000f0);
-          # set that node to the tested Ubuntu/77 pin value 0x90a60130.
-          replacements = {
-              '01271cf0': '01271c30',
-              '01271d00': '01271d01',
-              '01271e00': '01271ea6',
-              '01271f40': '01271f90',
-          }
-          for before, after in replacements.items():
-              a, b = bytes.fromhex(before), bytes.fromhex(after)
-              assert data.count(a) == 1, 'Expected exactly one codec verb ' + before
-              data = data.replace(a, b, 1)
-          custom['ConfigData'] = data
-          assert bytes.fromhex('02050010') in data, 'Realtek speaker vendor coefficient absent'
-          assert bytes.fromhex('02045089') in data, 'Realtek speaker vendor coefficient absent'
-          assert bytes.fromhex('01271ea6') in data, 'Internal mic pin override absent'
+          speaker = [e for e in entries if e.get('CodecID') == codec_id and e.get('LayoutID') == 49]
+          mic = [e for e in entries if e.get('CodecID') == codec_id and e.get('LayoutID') == 77]
+          assert len(speaker) == len(mic) == 1, 'Expected exactly one layout49 and layout77 entry'
+          assert not any(e.get('CodecID') == codec_id and e.get('LayoutID') == 104 for e in entries)
+          custom = copy.deepcopy(mic[0])
+          custom['LayoutID'] = 104
+          custom['Codec'] = 'ASUS FX706HF experimental: retain layout77 mic pins and append layout49 speaker codec coefficients'
+          existing = bytes(custom['ConfigData'])
+          speaker_verbs = bytes(speaker[0]['ConfigData'])
+          assert bytes.fromhex('01271c30') in existing and bytes.fromhex('01271ea6') in existing
+          assert bytes.fromhex('01470c02') in existing, 'Expected layout77 EAPD speaker activation'
+          # These are the four codec coefficient writes present on working Layout 49
+          # and absent from working-microphone Layout 77.
+          vendor_verbs = bytes.fromhex('02050010020400200205004502045089')
+          assert speaker_verbs.endswith(vendor_verbs), 'Layout49 speaker coefficient sequence changed'
+          assert vendor_verbs not in existing
+          custom['ConfigData'] = existing + vendor_verbs
           entries.append(custom)
           path.write_bytes(plistlib.dumps(root, fmt=plistlib.FMT_XML, sort_keys=False))
-          print('Added PinConfigs for ALC256 Layout 103, retaining working speaker 49 initialization and enabling internal mic 0x12')
+          print('Added layout104 pin configs: layout77 pin routing + layout49 vendor coefficients')
           PY
 
       - name: Lilu Bootstrap
@@ -116,11 +110,11 @@ jobs:
           fi
           echo "Packaging $KEXT"
           mkdir -p output
-          ditto -c -k --sequesterRsrc --keepParent "$KEXT" output/AppleALC-ALC256-layout103-EXPERIMENTAL.zip
+          ditto -c -k --sequesterRsrc --keepParent "$KEXT" output/AppleALC-ALC256-layout104-EXPERIMENTAL.zip
 
       - name: Upload custom AppleALC artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AppleALC-ALC256-layout103-experimental
-          path: output/AppleALC-ALC256-layout103-EXPERIMENTAL.zip
+          name: AppleALC-ALC256-layout104-experimental
+          path: output/AppleALC-ALC256-layout104-EXPERIMENTAL.zip
           if-no-files-found: error
